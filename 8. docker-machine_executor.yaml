@@ -33,6 +33,7 @@ run_lint_tests:
     - echo "Cleaning up the temporary files"
 
 build_images:
+  image: almalinux:9
   stage: build
   scripts:
     - echo "Building Docker images"
