@@ -1,0 +1,24 @@
+### File name will be ".gitlab-ci.yml"
+
+run_tests:
+    before_script:
+      - echo "Preparing the data"
+    scripts:
+      - echo "Running tests"
+    after_script:
+      - echo "Cleaning up the temporary files"
+
+
+
+build_images:
+    scripts:
+      - echo "Building Docker images"
+      - echo "Tagging Docker images"
+
+
+
+push_images:
+    scripts:
+      - echo "Logging the Docker registry"
+      - echo "Pushing docker images to registry"
+
