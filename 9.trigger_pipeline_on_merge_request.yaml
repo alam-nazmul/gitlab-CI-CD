@@ -4,7 +4,7 @@ image: ubuntu:20.04
 
 workflow:
   rules:
-    - if: $CI_COMMIT_BRANCH != "main" #branch is not main
+    - if: $CI_COMMIT_BRANCH != "main" && $CI_PIPELINE_SOURCE != "merge_request_event" #branch is not main and it is not merge request
       when: never
     - when: always
 
@@ -33,13 +33,17 @@ run_lint_tests:
     - echo "Cleaning up the temporary files"
 
 build_images:
-  image: almalinux:9
+  only:
+    - main  # This argument will replace the universal Workflow rules.
+  image: almalinux:9  # This argument will replace the universal Workflow rules.
   stage: build
   scripts:
     - echo "Building Docker images"
     - echo "Tagging Docker images"
 
 push_images:
+  only:
+    - main
   stage: build
   needs:
     - build_images
@@ -48,6 +52,8 @@ push_images:
     - echo "Pushing docker images to registry"
 
 deploy_image:
+  only:
+    - main
   stage: deploy
   scripts:
     - echo "Deploying Docker"
