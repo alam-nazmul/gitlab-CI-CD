@@ -1,16 +1,15 @@
 ### File name will be ".gitlab-ci.yml"
 
-image: ubuntu:20.04
-
 workflow:
   rules:
     - if: $CI_COMMIT_BRANCH != "main" && $CI_PIPELINE_SOURCE != "merge_request_event" #branch is not main and it is not merge request
       when: never
     - when: always
 
-#variables:  # Global variables
-#  image_repo: docker.io/my-docker-id/myapp
-#  image_version: v2.1
+variables:  # Global variables
+  IMAGE_NAME: docker.io/my-docker-id/myapp
+  IMAGE_TAG: v2.1
+  DEV_SERVER_HOST: 172.16.4.10
 
 
 stages:
@@ -51,8 +50,21 @@ push_image:
     - shell
   before_script:
     - echo "Loging docker registry"
-    - docker login -u nazmul -p 1234 registry.gitlab.com -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+#    - docker login -u nazmul -p 1234 registry.gitlab.com -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.gitlab.com
     -
   script:
 #    - docker push registry.gitlab.com/nazmul/my-app:1.0
     - docker push $CI_REGISTRY_IMAGE/microservice/$MICRO_SERVICE:1.0
+
+
+deploy_to_dev:
+  stage: deploy
+  tags:
+    - ec2
+    - shell
+    - remote
+  scripts:
+    - ssh -o StrictHostKeyChecking=no -i $SSH_PRIVATE_KEY ubuntu@$DEV_SERVER_HOST "
+      docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.gitlab.com &&
+      docker run -d -p 3000:3000 $CI_REGISTRY_IMAGE/microservice/$MICRO_SERVICE:1.0"
