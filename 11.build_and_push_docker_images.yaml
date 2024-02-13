@@ -13,12 +13,12 @@ workflow:
 #  image_version: v2.1
 
 
-#stages:
-#  - test
-#  - build
-#  - deploy
+stages:
+  - test
+  - build
 
 run_unit_tests:
+  stage: test
   image: node:17-alpine3.14
   tags:
     - ec2
@@ -30,26 +30,29 @@ run_unit_tests:
 
 
 
-
 build_image:
+  stage: build
   tags:
     - ec2
     - remote
     - shell
   script:
-    - docker build . -t registry.gitlab.com/nazmul/my-app:1.0
+#    - docker build . -t registry.gitlab.com/nazmul/my-app:1.0
+    - docker build -t $CI_REGISTRY_IMAGE/microservice/$MICRO_SERVICE:1.0
 
 
 push_image:
+  stage: build
   needs:
-    - build_image
+    - build_image # Depends on parameter
   tags:
     - ec2
     - remote
     - shell
   before_script:
     - echo "Loging docker registry"
-    - docker login -u nazmul -p 1234 registry.gitlab.com -u nazmul -p 1234
+    - docker login -u nazmul -p 1234 registry.gitlab.com -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
     -
   script:
-    - docker push  registry.gitlab.com/nazmul/my-app:1.0
+#    - docker push registry.gitlab.com/nazmul/my-app:1.0
+    - docker push $CI_REGISTRY_IMAGE/microservice/$MICRO_SERVICE:1.0
