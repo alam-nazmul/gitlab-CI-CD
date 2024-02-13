@@ -1,0 +1,58 @@
+### File name will be ".gitlab-ci.yml"
+
+image: ubuntu:20.04
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH != "main" && $CI_PIPELINE_SOURCE != "merge_request_event" #branch is not main and it is not merge request
+      when: never
+    - when: always
+
+#variables:  # Global variables
+#  image_repo: docker.io/my-docker-id/myapp
+#  image_version: v2.1
+
+
+stages:
+  - test
+  - build
+
+run_unit_tests:
+  stage: test
+  image: node:17-alpine3.14
+  tags:
+    - ec2
+    - remote
+    - docker
+  before_script:
+    - cd app
+    - npm install
+
+
+
+build_image:
+  stage: build
+  tags:
+    - ec2
+    - remote
+    - shell
+  script:
+#    - docker build . -t registry.gitlab.com/nazmul/my-app:1.0
+    - docker build -t $CI_REGISTRY_IMAGE/microservice/$MICRO_SERVICE:1.0
+
+
+push_image:
+  stage: build
+  needs:
+    - build_image # Depends on parameter
+  tags:
+    - ec2
+    - remote
+    - shell
+  before_script:
+    - echo "Loging docker registry"
+    - docker login -u nazmul -p 1234 registry.gitlab.com -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+    -
+  script:
+#    - docker push registry.gitlab.com/nazmul/my-app:1.0
+    - docker push $CI_REGISTRY_IMAGE/microservice/$MICRO_SERVICE:1.0
